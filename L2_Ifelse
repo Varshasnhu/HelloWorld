@@ -1,0 +1,9 @@
+print ("If/Else Examples")
+
+name = input ("What's your name?")
+age = int(input("What's your age? "))
+
+if age < 19:
+    print(f" Hi{name}!! and you are {age} yrs old, So your category will be KIDS ")
+else:
+    print(f" Hi{name}!! and you are {age} yrs old, So your category will be ADULT ")
