@@ -1,0 +1,10 @@
+# Variables & Data Types
+name = "Vasuki Palanivelu"
+pname = "Varsha"
+age = 35
+height = 5.1
+weight = 125
+School = "SNHU - MS "
+is_student = True
+
+print f("Legal Name" {name})
