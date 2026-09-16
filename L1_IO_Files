@@ -1,0 +1,14 @@
+# INPUT & OUTPUT
+
+# Get input from user
+name = input("What is your name? ")
+age = input("What is your age? ")
+city = input("Where are you from? ")
+major =input("What's your major Degree? ")
+
+# Display output
+print("\n=== YOUR PROFILE ===")
+print(f"Hello {name}")
+print(f"Age: {age}")
+print(f"City: {city}")
+print(f"Major: {major}")
