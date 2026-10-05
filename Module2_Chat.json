@@ -1,0 +1,22 @@
+{
+  "chatId": "chat_001",
+  "title": "GitHub Discussion",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Can you explain what GitHub is?"
+    },
+    {
+      "role": "assistant",
+      "content": "GitHub is a web-based platform for hosting and collaborating on code repositories. It supports version control with Git and allows developers to share projects, review code, manage issues, and work together on software development."
+    },
+    {
+      "role": "user",
+      "content": "What are the main features of GitHub?"
+    },
+    {
+      "role": "assistant",
+      "content": "Main features include repositories, pull requests, issues, branches, commits, actions, project boards, and collaboration tools for teams."
+    }
+  ]
+}
