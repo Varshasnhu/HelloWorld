@@ -10,17 +10,18 @@ GRID_COUNT = WIDTH // GRID_SIZE
 # Colors
 BLACK = (15, 15, 15)
 DARK = (30, 30, 30)
-GREEN = (92, 167, 255)
-GREEN_DARK = (40, 80, 160)
 WHITE = (255, 255, 255)
 RED = (220, 60, 60)
 RED_DARK = (160, 25, 25)
-YELLOW = (255, 215, 0)
 SNAKE_BODY = (149, 93, 255)
 SNAKE_HEAD = (102, 58, 199)
+BLUE = (92, 167, 255)
+GREEN = (60, 180, 90)
 
 # Game settings
-SPEED = 6
+LEVEL_SPEEDS = {1: 8, 2: 6, 3: 4}
+current_level = 1
+SPEED = LEVEL_SPEEDS[current_level]
 
 # Snake setup
 snake = []
@@ -29,22 +30,25 @@ next_direction = (1, 0)
 food = (15, 10)
 score = 0
 game_over = False
+start_screen = True
 
 pygame.init()
-pygame.display.set_caption("Realistic Snake")
+pygame.display.set_caption("Ready, Set, Go!")
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-font = pygame.font.SysFont(None, 36)
+font = pygame.font.SysFont(None, 42)
+header_font = pygame.font.SysFont(None, 72)
 small_font = pygame.font.SysFont(None, 24)
 
 
 def reset_game():
-    global snake, direction, next_direction, food, score, game_over
+    global snake, direction, next_direction, food, score, game_over, SPEED
     snake = [(9, 10), (8, 10), (7, 10)]
     direction = (1, 0)
     next_direction = (1, 0)
     score = 0
     game_over = False
+    SPEED = LEVEL_SPEEDS[current_level]
     place_food()
 
 
@@ -92,13 +96,10 @@ def draw_snake_segment(segment, is_head=False):
     pygame.draw.rect(screen, color, rect, border_radius=10)
 
     if is_head:
-        eye_offset = 6
-        eye_size = 3
-
         left_eye = (px + 7, py + 8)
         right_eye = (px + GRID_SIZE - 10, py + 8)
-        pygame.draw.circle(screen, WHITE, left_eye, eye_size)
-        pygame.draw.circle(screen, WHITE, right_eye, eye_size)
+        pygame.draw.circle(screen, WHITE, left_eye, 3)
+        pygame.draw.circle(screen, WHITE, right_eye, 3)
         pygame.draw.circle(screen, BLACK, left_eye, 1)
         pygame.draw.circle(screen, BLACK, right_eye, 1)
 
@@ -118,19 +119,45 @@ def draw_score():
     screen.blit(text, (18, 14))
 
 
+def draw_level_info():
+    level_text = small_font.render(f"Level {current_level}", True, WHITE)
+    screen.blit(level_text, (620, 18))
+
+
+def draw_start_screen():
+    screen.fill(BLACK)
+    title = header_font.render("Ready, Set, Go!", True, BLUE)
+    screen.blit(title, (190, 160))
+
+    subtitle = font.render("Choose a level: 1 = slow, 2 = medium, 3 = fast", True, WHITE)
+    screen.blit(subtitle, (60, 250))
+
+    level_box = pygame.Rect(200, 330, 320, 90)
+    pygame.draw.rect(screen, DARK, level_box, border_radius=12)
+    pygame.draw.rect(screen, BLUE, level_box, 3, border_radius=12)
+
+    level_text = header_font.render(f"Level {current_level}", True, WHITE)
+    screen.blit(level_text, (285, 350))
+
+    help_text = small_font.render("Press 1 / 2 / 3, then click mouse or press Enter to start", True, WHITE)
+    screen.blit(help_text, (120, 460))
+
+    pygame.display.flip()
+
+
 def draw_game_over_prompt():
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 150))
     screen.blit(overlay, (0, 0))
 
-    game_over_text = font.render("Game Over", True, WHITE)
-    screen.blit(game_over_text, (260, 250))
+    game_over_text = header_font.render("Game Over", True, WHITE)
+    screen.blit(game_over_text, (215, 250))
 
     prompt = small_font.render("Play again? (Y/N)", True, WHITE)
-    screen.blit(prompt, (270, 310))
+    screen.blit(prompt, (285, 345))
 
     score_text = small_font.render(f"Final Score: {score}", True, WHITE)
-    screen.blit(score_text, (290, 345))
+    screen.blit(score_text, (295, 380))
 
 
 reset_game()
@@ -140,6 +167,26 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+        if start_screen:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    current_level = 1
+                elif event.key == pygame.K_2:
+                    current_level = 2
+                elif event.key == pygame.K_3:
+                    current_level = 3
+                elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                    start_screen = False
+                    reset_game()
+                elif event.key == pygame.K_ESCAPE:
+                    running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                start_screen = False
+                reset_game()
+
+            draw_start_screen()
+            continue
 
         if event.type == pygame.KEYDOWN:
             if game_over:
@@ -157,7 +204,7 @@ while running:
                 elif event.key == pygame.K_RIGHT and direction != (-1, 0):
                     next_direction = (1, 0)
 
-    if not game_over:
+    if not start_screen and not game_over:
         direction = next_direction
 
         head_x, head_y = snake[0]
@@ -177,16 +224,18 @@ while running:
             else:
                 snake.pop()
 
-    screen.fill(BLACK)
-    draw_grid()
-    draw_food()
-    draw_snake()
-    draw_score()
+    if not start_screen:
+        screen.fill(BLACK)
+        draw_grid()
+        draw_food()
+        draw_snake()
+        draw_score()
+        draw_level_info()
 
-    if game_over:
-        draw_game_over_prompt()
+        if game_over:
+            draw_game_over_prompt()
 
-    pygame.display.flip()
-    clock.tick(SPEED)
+        pygame.display.flip()
+        clock.tick(SPEED)
 
 pygame.quit()
