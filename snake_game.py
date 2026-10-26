@@ -1,3 +1,4 @@
+import math
 import pygame
 import random
 
@@ -13,11 +14,11 @@ DARK = (30, 30, 30)
 WHITE = (255, 255, 255)
 RED = (220, 60, 60)
 RED_DARK = (160, 25, 25)
-SNAKE_BODY = (149, 93, 255)
-SNAKE_HEAD = (102, 58, 199)
+YELLOW = (255, 215, 0)
 BLUE = (92, 167, 255)
 GREEN = (60, 180, 90)
-YELLOW = (255, 215, 0)
+PURPLE = (149, 93, 255)
+PURPLE_DARK = (102, 58, 199)
 
 # Game settings
 LEVEL_SPEEDS = {1: 8, 2: 6, 3: 4}
@@ -33,6 +34,16 @@ score = 0
 game_over = False
 start_screen = True
 
+# Snake color selection
+snake_colors = {
+    "purple": (PURPLE, PURPLE_DARK),
+    "blue": (BLUE, (57, 99, 180)),
+    "green": (GREEN, (34, 120, 60)),
+    "red": (RED, RED_DARK),
+}
+snake_color_name = "purple"
+SNAKE_BODY, SNAKE_HEAD = snake_colors[snake_color_name]
+
 pygame.init()
 pygame.display.set_caption("Ready, Set, Go!")
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -44,13 +55,14 @@ small_font = pygame.font.SysFont("verdana", 22)
 
 
 def reset_game():
-    global snake, direction, next_direction, food, score, game_over, SPEED
+    global snake, direction, next_direction, food, score, game_over, SPEED, SNAKE_BODY, SNAKE_HEAD
     snake = [(9, 10), (8, 10), (7, 10)]
     direction = (1, 0)
     next_direction = (1, 0)
     score = 0
     game_over = False
     SPEED = LEVEL_SPEEDS[current_level]
+    SNAKE_BODY, SNAKE_HEAD = snake_colors[snake_color_name]
     place_food()
 
 
@@ -126,10 +138,23 @@ def draw_level_info():
     screen.blit(level_text, (620, 18))
 
 
+def draw_intro_animation():
+    time_ms = pygame.time.get_ticks()
+    for i in range(18):
+        x = (i * 42 + time_ms * 0.03) % (WIDTH + 150) - 50
+        y = 120 + (i % 6) * 45 + math.sin(time_ms / 500 + i) * 18
+        radius = 7 + (i % 4) * 3
+        pygame.draw.circle(screen, (50 + i * 6, 80 + i * 5, 120 + i * 4), (int(x), int(y)), radius)
+
+    glow = 100 + int(40 * math.sin(time_ms / 250))
+    title_color = (glow, glow + 30, 255)
+    title = header_font.render("READY, SET, GO!", True, title_color)
+    screen.blit(title, (120, 110))
+
+
 def draw_start_screen():
     screen.fill(BLACK)
-    title = header_font.render("READY, SET, GO!", True, BLUE)
-    screen.blit(title, (120, 110))
+    draw_intro_animation()
 
     info = subtitle_font.render("Move with the arrow keys: ↑ ↓ ← →", True, WHITE)
     screen.blit(info, (140, 220))
@@ -142,10 +167,17 @@ def draw_start_screen():
     pygame.draw.rect(screen, BLUE, level_box, 3, border_radius=12)
 
     level_text = header_font.render(f"Level {current_level}", True, WHITE)
-    screen.blit(level_text, (285, 350))
+    text_rect = level_text.get_rect(center=level_box.center)
+    screen.blit(level_text, text_rect)
 
-    help_text = small_font.render("Press 1 / 2 / 3, then Enter or click to start", True, WHITE)
-    screen.blit(help_text, (120, 455))
+    info_line = small_font.render("Color: P purple  |  B blue  |  G green  |  R red", True, WHITE)
+    screen.blit(info_line, (110, 440))
+
+    current_color_line = small_font.render(f"Current snake color: {snake_color_name.title()}", True, WHITE)
+    screen.blit(current_color_line, (220, 470))
+
+    help_text = small_font.render("Press 1 / 2 / 3 for level, P/B/G/R for color, then Enter or click to start", True, WHITE)
+    screen.blit(help_text, (40, 520))
 
     pygame.display.flip()
 
@@ -181,6 +213,14 @@ while running:
                     current_level = 2
                 elif event.key == pygame.K_3:
                     current_level = 3
+                elif event.key == pygame.K_p:
+                    snake_color_name = "purple"
+                elif event.key == pygame.K_b:
+                    snake_color_name = "blue"
+                elif event.key == pygame.K_g:
+                    snake_color_name = "green"
+                elif event.key == pygame.K_r:
+                    snake_color_name = "red"
                 elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                     start_screen = False
                     reset_game()
