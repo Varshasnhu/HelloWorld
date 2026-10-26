@@ -17,6 +17,7 @@ SNAKE_BODY = (149, 93, 255)
 SNAKE_HEAD = (102, 58, 199)
 BLUE = (92, 167, 255)
 GREEN = (60, 180, 90)
+YELLOW = (255, 215, 0)
 
 # Game settings
 LEVEL_SPEEDS = {1: 8, 2: 6, 3: 4}
@@ -36,9 +37,10 @@ pygame.init()
 pygame.display.set_caption("Ready, Set, Go!")
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-font = pygame.font.SysFont(None, 42)
-header_font = pygame.font.SysFont(None, 72)
-small_font = pygame.font.SysFont(None, 24)
+font = pygame.font.SysFont("verdana", 30, bold=True)
+header_font = pygame.font.SysFont("arialblack", 58, bold=True)
+subtitle_font = pygame.font.SysFont("verdana", 26, bold=True)
+small_font = pygame.font.SysFont("verdana", 22)
 
 
 def reset_game():
@@ -126,11 +128,14 @@ def draw_level_info():
 
 def draw_start_screen():
     screen.fill(BLACK)
-    title = header_font.render("Ready, Set, Go!", True, BLUE)
-    screen.blit(title, (190, 160))
+    title = header_font.render("READY, SET, GO!", True, BLUE)
+    screen.blit(title, (120, 110))
 
-    subtitle = font.render("Choose a level: 1 = slow, 2 = medium, 3 = fast", True, WHITE)
-    screen.blit(subtitle, (60, 250))
+    info = subtitle_font.render("Move with the arrow keys: ↑ ↓ ← →", True, WHITE)
+    screen.blit(info, (140, 220))
+
+    subtitle = subtitle_font.render("Choose Level 1, 2 or 3", True, YELLOW)
+    screen.blit(subtitle, (200, 280))
 
     level_box = pygame.Rect(200, 330, 320, 90)
     pygame.draw.rect(screen, DARK, level_box, border_radius=12)
@@ -139,8 +144,8 @@ def draw_start_screen():
     level_text = header_font.render(f"Level {current_level}", True, WHITE)
     screen.blit(level_text, (285, 350))
 
-    help_text = small_font.render("Press 1 / 2 / 3, then click mouse or press Enter to start", True, WHITE)
-    screen.blit(help_text, (120, 460))
+    help_text = small_font.render("Press 1 / 2 / 3, then Enter or click to start", True, WHITE)
+    screen.blit(help_text, (120, 455))
 
     pygame.display.flip()
 
