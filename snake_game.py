@@ -10,23 +10,25 @@ GRID_COUNT = WIDTH // GRID_SIZE
 # Colors
 BLACK = (15, 15, 15)
 DARK = (30, 30, 30)
-GREEN = (76, 175, 80)
-GREEN_DARK = (32, 120, 44)
-GREEN_LIGHT = (144, 238, 144)
+GREEN = (92, 167, 255)
+GREEN_DARK = (40, 80, 160)
+WHITE = (255, 255, 255)
 RED = (220, 60, 60)
 RED_DARK = (160, 25, 25)
-WHITE = (255, 255, 255)
 YELLOW = (255, 215, 0)
+SNAKE_BODY = (149, 93, 255)
+SNAKE_HEAD = (102, 58, 199)
 
 # Game settings
 SPEED = 6
 
 # Snake setup
-snake = [(9, 10), (8, 10), (7, 10)]
+snake = []
 direction = (1, 0)
 next_direction = (1, 0)
 food = (15, 10)
 score = 0
+game_over = False
 
 pygame.init()
 pygame.display.set_caption("Realistic Snake")
@@ -34,6 +36,16 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 36)
 small_font = pygame.font.SysFont(None, 24)
+
+
+def reset_game():
+    global snake, direction, next_direction, food, score, game_over
+    snake = [(9, 10), (8, 10), (7, 10)]
+    direction = (1, 0)
+    next_direction = (1, 0)
+    score = 0
+    game_over = False
+    place_food()
 
 
 def place_food():
@@ -76,7 +88,7 @@ def draw_snake_segment(segment, is_head=False):
     py = y * GRID_SIZE
 
     rect = pygame.Rect(px + 2, py + 2, GRID_SIZE - 4, GRID_SIZE - 4)
-    color = GREEN if not is_head else GREEN_DARK
+    color = SNAKE_HEAD if is_head else SNAKE_BODY
     pygame.draw.rect(screen, color, rect, border_radius=10)
 
     if is_head:
@@ -106,6 +118,22 @@ def draw_score():
     screen.blit(text, (18, 14))
 
 
+def draw_game_over_prompt():
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 150))
+    screen.blit(overlay, (0, 0))
+
+    game_over_text = font.render("Game Over", True, WHITE)
+    screen.blit(game_over_text, (260, 250))
+
+    prompt = small_font.render("Play again? (Y/N)", True, WHITE)
+    screen.blit(prompt, (270, 310))
+
+    score_text = small_font.render(f"Final Score: {score}", True, WHITE)
+    screen.blit(score_text, (290, 345))
+
+
+reset_game()
 running = True
 
 while running:
@@ -114,49 +142,51 @@ while running:
             running = False
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP and direction != (0, 1):
-                next_direction = (0, -1)
-            elif event.key == pygame.K_DOWN and direction != (0, -1):
-                next_direction = (0, 1)
-            elif event.key == pygame.K_LEFT and direction != (1, 0):
-                next_direction = (-1, 0)
-            elif event.key == pygame.K_RIGHT and direction != (-1, 0):
-                next_direction = (1, 0)
+            if game_over:
+                if event.key == pygame.K_y:
+                    reset_game()
+                elif event.key == pygame.K_n:
+                    running = False
+            else:
+                if event.key == pygame.K_UP and direction != (0, 1):
+                    next_direction = (0, -1)
+                elif event.key == pygame.K_DOWN and direction != (0, -1):
+                    next_direction = (0, 1)
+                elif event.key == pygame.K_LEFT and direction != (1, 0):
+                    next_direction = (-1, 0)
+                elif event.key == pygame.K_RIGHT and direction != (-1, 0):
+                    next_direction = (1, 0)
 
-    direction = next_direction
+    if not game_over:
+        direction = next_direction
 
-    head_x, head_y = snake[0]
-    dx, dy = direction
-    new_head = (head_x + dx, head_y + dy)
+        head_x, head_y = snake[0]
+        dx, dy = direction
+        new_head = (head_x + dx, head_y + dy)
 
-    if new_head[0] < 0 or new_head[0] >= GRID_COUNT or new_head[1] < 0 or new_head[1] >= GRID_COUNT:
-        running = False
+        if new_head[0] < 0 or new_head[0] >= GRID_COUNT or new_head[1] < 0 or new_head[1] >= GRID_COUNT:
+            game_over = True
+        elif new_head in snake[:-1]:
+            game_over = True
+        else:
+            snake.insert(0, new_head)
 
-    if new_head in snake[:-1]:
-        running = False
-
-    snake.insert(0, new_head)
-
-    if new_head == food:
-        score += 1
-        place_food()
-    else:
-        snake.pop()
+            if new_head == food:
+                score += 1
+                place_food()
+            else:
+                snake.pop()
 
     screen.fill(BLACK)
     draw_grid()
     draw_food()
     draw_snake()
     draw_score()
+
+    if game_over:
+        draw_game_over_prompt()
+
     pygame.display.flip()
     clock.tick(SPEED)
-
-if not running:
-    game_over = font.render("Game Over!", True, WHITE)
-    screen.blit(game_over, (260, 330))
-    score_text = small_font.render(f"Final Score: {score}", True, WHITE)
-    screen.blit(score_text, (290, 370))
-    pygame.display.flip()
-    pygame.time.delay(1500)
 
 pygame.quit()
