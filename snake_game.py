@@ -2,32 +2,38 @@ import pygame
 import random
 
 # Screen settings
-WIDTH = 600
-HEIGHT = 600
-GRID_SIZE = 20
+WIDTH = 720
+HEIGHT = 720
+GRID_SIZE = 24
 GRID_COUNT = WIDTH // GRID_SIZE
 
 # Colors
-BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
+BLACK = (15, 15, 15)
+DARK = (30, 30, 30)
+GREEN = (76, 175, 80)
+GREEN_DARK = (32, 120, 44)
+GREEN_LIGHT = (144, 238, 144)
+RED = (220, 60, 60)
+RED_DARK = (160, 25, 25)
 WHITE = (255, 255, 255)
+YELLOW = (255, 215, 0)
 
 # Game settings
-SPEED = 5
+SPEED = 6
 
 # Snake setup
-snake = [(10, 10), (9, 10), (8, 10)]
+snake = [(9, 10), (8, 10), (7, 10)]
 direction = (1, 0)
 next_direction = (1, 0)
 food = (15, 10)
 score = 0
 
 pygame.init()
+pygame.display.set_caption("Realistic Snake")
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Snake Game")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 36)
+small_font = pygame.font.SysFont(None, 24)
 
 
 def place_food():
@@ -42,25 +48,62 @@ def place_food():
 
 def draw_grid():
     for x in range(0, WIDTH, GRID_SIZE):
-        pygame.draw.line(screen, (40, 40, 40), (x, 0), (x, HEIGHT))
+        pygame.draw.line(screen, (45, 45, 45), (x, 0), (x, HEIGHT))
     for y in range(0, HEIGHT, GRID_SIZE):
-        pygame.draw.line(screen, (40, 40, 40), (0, y), (WIDTH, y))
+        pygame.draw.line(screen, (45, 45, 45), (0, y), (WIDTH, y))
+
+
+def draw_apple(cell_x, cell_y):
+    x = cell_x * GRID_SIZE + 2
+    y = cell_y * GRID_SIZE + 2
+    radius = GRID_SIZE // 2 - 4
+
+    pygame.draw.circle(screen, RED, (x + radius + 2, y + radius + 2), radius)
+    pygame.draw.circle(screen, RED_DARK, (x + radius + 2, y + radius + 2), radius - 6)
+
+    stem_x = x + radius + 2
+    stem_y = y + 4
+    pygame.draw.rect(screen, (120, 80, 40), (stem_x - 2, stem_y, 5, 12))
+
+    leaf_x = stem_x + 6
+    leaf_y = stem_y + 4
+    pygame.draw.ellipse(screen, (40, 180, 80), (leaf_x - 8, leaf_y - 12, 14, 18))
+
+
+def draw_snake_segment(segment, is_head=False):
+    x, y = segment
+    px = x * GRID_SIZE
+    py = y * GRID_SIZE
+
+    rect = pygame.Rect(px + 2, py + 2, GRID_SIZE - 4, GRID_SIZE - 4)
+    color = GREEN if not is_head else GREEN_DARK
+    pygame.draw.rect(screen, color, rect, border_radius=10)
+
+    if is_head:
+        eye_offset = 6
+        eye_size = 3
+
+        left_eye = (px + 7, py + 8)
+        right_eye = (px + GRID_SIZE - 10, py + 8)
+        pygame.draw.circle(screen, WHITE, left_eye, eye_size)
+        pygame.draw.circle(screen, WHITE, right_eye, eye_size)
+        pygame.draw.circle(screen, BLACK, left_eye, 1)
+        pygame.draw.circle(screen, BLACK, right_eye, 1)
 
 
 def draw_snake():
-    for segment in snake:
-        x, y = segment
-        pygame.draw.rect(screen, GREEN, (x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE))
+    for idx, segment in enumerate(snake):
+        draw_snake_segment(segment, idx == 0)
 
 
 def draw_food():
     x, y = food
-    pygame.draw.rect(screen, RED, (x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE))
+    draw_apple(x, y)
 
 
 def draw_score():
     text = font.render(f"Score: {score}", True, WHITE)
-    screen.blit(text, (10, 10))
+    screen.blit(text, (18, 14))
 
 
 running = True
@@ -82,22 +125,18 @@ while running:
 
     direction = next_direction
 
-    # Move snake
     head_x, head_y = snake[0]
     dx, dy = direction
     new_head = (head_x + dx, head_y + dy)
 
-    # Collision with walls
     if new_head[0] < 0 or new_head[0] >= GRID_COUNT or new_head[1] < 0 or new_head[1] >= GRID_COUNT:
         running = False
 
-    # Collision with itself (ignore tail if moving into it)
     if new_head in snake[:-1]:
         running = False
 
     snake.insert(0, new_head)
 
-    # Eat food
     if new_head == food:
         score += 1
         place_food()
@@ -112,10 +151,11 @@ while running:
     pygame.display.flip()
     clock.tick(SPEED)
 
-# Game over message
 if not running:
     game_over = font.render("Game Over!", True, WHITE)
-    screen.blit(game_over, (200, 250))
+    screen.blit(game_over, (260, 330))
+    score_text = small_font.render(f"Final Score: {score}", True, WHITE)
+    screen.blit(score_text, (290, 370))
     pygame.display.flip()
     pygame.time.delay(1500)
 
