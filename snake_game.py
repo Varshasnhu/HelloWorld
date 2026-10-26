@@ -16,6 +16,7 @@ WHITE = (255, 255, 255)
 # Snake setup
 snake = [(10, 10), (9, 10), (8, 10)]
 direction = (1, 0)
+next_direction = (1, 0)
 food = (15, 10)
 score = 0
 
@@ -68,13 +69,15 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP and direction != (0, 1):
-                direction = (0, -1)
+                next_direction = (0, -1)
             elif event.key == pygame.K_DOWN and direction != (0, -1):
-                direction = (0, 1)
+                next_direction = (0, 1)
             elif event.key == pygame.K_LEFT and direction != (1, 0):
-                direction = (-1, 0)
+                next_direction = (-1, 0)
             elif event.key == pygame.K_RIGHT and direction != (-1, 0):
-                direction = (1, 0)
+                next_direction = (1, 0)
+
+    direction = next_direction
 
     # Move snake
     head_x, head_y = snake[0]
@@ -85,8 +88,8 @@ while running:
     if new_head[0] < 0 or new_head[0] >= GRID_COUNT or new_head[1] < 0 or new_head[1] >= GRID_COUNT:
         running = False
 
-    # Collision with itself
-    if new_head in snake:
+    # Collision with itself (ignore tail if moving into it)
+    if new_head in snake[:-1]:
         running = False
 
     snake.insert(0, new_head)
@@ -104,7 +107,7 @@ while running:
     draw_snake()
     draw_score()
     pygame.display.flip()
-    clock.tick(10)
+    clock.tick(7)
 
 # Game over message
 if not running:
