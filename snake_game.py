@@ -1,6 +1,6 @@
 import math
-import pygame
 import random
+import pygame
 
 # Screen settings
 WIDTH = 720
@@ -19,9 +19,19 @@ BLUE = (92, 167, 255)
 GREEN = (60, 180, 90)
 PURPLE = (149, 93, 255)
 PURPLE_DARK = (102, 58, 199)
+ORANGE = (255, 140, 40)
+ORANGE_DARK = (180, 90, 0)
+BERRY = (180, 80, 200)
+GOLD = (255, 200, 50)
+GOLD_DARK = (180, 140, 0)
 
 # Game settings
 LEVEL_SPEEDS = {1: 8, 2: 6, 3: 4}
+LEVEL_FOODS = {
+    1: ["apple", "berry"],
+    2: ["apple", "orange", "grape"],
+    3: ["golden_apple", "star_fruit", "grape"],
+}
 current_level = 1
 SPEED = LEVEL_SPEEDS[current_level]
 
@@ -30,6 +40,7 @@ snake = []
 direction = (1, 0)
 next_direction = (1, 0)
 food = (15, 10)
+food_type = "apple"
 score = 0
 game_over = False
 start_screen = True
@@ -55,7 +66,7 @@ small_font = pygame.font.SysFont("verdana", 22)
 
 
 def reset_game():
-    global snake, direction, next_direction, food, score, game_over, SPEED, SNAKE_BODY, SNAKE_HEAD
+    global snake, direction, next_direction, food, score, game_over, SPEED, SNAKE_BODY, SNAKE_HEAD, food_type
     snake = [(9, 10), (8, 10), (7, 10)]
     direction = (1, 0)
     next_direction = (1, 0)
@@ -67,12 +78,13 @@ def reset_game():
 
 
 def place_food():
-    global food
+    global food, food_type
     while True:
         x = random.randint(0, GRID_COUNT - 1)
         y = random.randint(0, GRID_COUNT - 1)
         if (x, y) not in snake:
             food = (x, y)
+            food_type = random.choice(LEVEL_FOODS[current_level])
             return
 
 
@@ -100,6 +112,77 @@ def draw_apple(cell_x, cell_y):
     pygame.draw.ellipse(screen, (40, 180, 80), (leaf_x - 8, leaf_y - 12, 14, 18))
 
 
+def draw_berry(cell_x, cell_y):
+    x = cell_x * GRID_SIZE + 8
+    y = cell_y * GRID_SIZE + 8
+    pygame.draw.circle(screen, BERRY, (x + 8, y + 8), 8)
+    pygame.draw.circle(screen, (120, 40, 150), (x + 11, y + 4), 3)
+    pygame.draw.line(screen, (90, 50, 100), (x + 8, y + 2), (x + 8, y - 4), 2)
+
+
+def draw_orange(cell_x, cell_y):
+    x = cell_x * GRID_SIZE + 4
+    y = cell_y * GRID_SIZE + 4
+    pygame.draw.circle(screen, ORANGE, (x + 10, y + 10), 10)
+    pygame.draw.circle(screen, ORANGE_DARK, (x + 10, y + 10), 6)
+    pygame.draw.circle(screen, (255, 220, 160), (x + 14, y + 6), 2)
+
+
+def draw_grape(cell_x, cell_y):
+    x = cell_x * GRID_SIZE + 5
+    y = cell_y * GRID_SIZE + 5
+    colors = [(160, 90, 220), (180, 110, 240), (120, 70, 180)]
+    for dx, dy, color in [(0, 0, colors[0]), (8, 0, colors[1]), (4, 8, colors[2]), (12, 8, colors[1]), (0, 12, colors[0]), (8, 12, colors[2])]:
+        pygame.draw.circle(screen, color, (x + dx + 6, y + dy + 6), 5)
+
+
+def draw_golden_apple(cell_x, cell_y):
+    x = cell_x * GRID_SIZE + 2
+    y = cell_y * GRID_SIZE + 2
+    radius = GRID_SIZE // 2 - 4
+
+    pygame.draw.circle(screen, GOLD, (x + radius + 2, y + radius + 2), radius)
+    pygame.draw.circle(screen, GOLD_DARK, (x + radius + 2, y + radius + 2), radius - 7)
+
+    stem_x = x + radius + 2
+    stem_y = y + 4
+    pygame.draw.rect(screen, (120, 80, 40), (stem_x - 2, stem_y, 5, 12))
+
+    leaf_x = stem_x + 6
+    leaf_y = stem_y + 2
+    pygame.draw.ellipse(screen, (60, 160, 90), (leaf_x - 8, leaf_y - 12, 14, 18))
+
+
+def draw_star_fruit(cell_x, cell_y):
+    x = cell_x * GRID_SIZE + 12
+    y = cell_y * GRID_SIZE + 12
+    points = []
+    for i in range(10):
+        angle = math.radians(i * 36 - 90)
+        radius = 10 if i % 2 == 0 else 5
+        px = x + radius * math.cos(angle)
+        py = y + radius * math.sin(angle)
+        points.append((px, py))
+    pygame.draw.polygon(screen, (255, 220, 90), points)
+    pygame.draw.polygon(screen, (200, 150, 30), points, 2)
+
+
+def draw_food():
+    x, y = food
+    if food_type == "apple":
+        draw_apple(x, y)
+    elif food_type == "berry":
+        draw_berry(x, y)
+    elif food_type == "orange":
+        draw_orange(x, y)
+    elif food_type == "grape":
+        draw_grape(x, y)
+    elif food_type == "golden_apple":
+        draw_golden_apple(x, y)
+    elif food_type == "star_fruit":
+        draw_star_fruit(x, y)
+
+
 def draw_snake_segment(segment, is_head=False):
     x, y = segment
     px = x * GRID_SIZE
@@ -121,11 +204,6 @@ def draw_snake_segment(segment, is_head=False):
 def draw_snake():
     for idx, segment in enumerate(snake):
         draw_snake_segment(segment, idx == 0)
-
-
-def draw_food():
-    x, y = food
-    draw_apple(x, y)
 
 
 def draw_score():
