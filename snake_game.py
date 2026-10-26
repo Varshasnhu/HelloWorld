@@ -13,6 +13,9 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 WHITE = (255, 255, 255)
 
+# Game settings
+SPEED = 5
+
 # Snake setup
 snake = [(10, 10), (9, 10), (8, 10)]
 direction = (1, 0)
@@ -107,7 +110,7 @@ while running:
     draw_snake()
     draw_score()
     pygame.display.flip()
-    clock.tick(7)
+    clock.tick(SPEED)
 
 # Game over message
 if not running:
