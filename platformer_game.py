@@ -28,9 +28,9 @@ small_font = pygame.font.SysFont("arial", 20)
 player = pygame.Rect(60, 420, 34, 48)
 player_vel_x = 0
 player_vel_y = 0
-move_speed = 5
-jump_strength = 15
-gravity = 0.7
+move_speed = 2
+jump_strength = 11
+gravity = 0.45
 on_ground = False
 
 # --- Platforms ---
@@ -55,7 +55,7 @@ coins = [
 # --- Enemy ---
 enemy = pygame.Rect(320, 470, 28, 28)
 enemy_dir = 1
-enemy_speed = 2
+enemy_speed = 1
 
 # --- Goal flag ---
 flag = pygame.Rect(840, 150, 18, 120)
@@ -72,9 +72,6 @@ def reset_game():
     player_vel_y = 0
     on_ground = False
     score = 0
-    for i in range(len(coins)):
-        coins[i].width = 18
-        coins[i].height = 18
     state = "playing"
 
 
@@ -201,7 +198,7 @@ def move_enemy():
 
 
 def update_game():
-    global state
+    global state, score
     if state != "playing":
         return
 
@@ -214,7 +211,6 @@ def update_game():
     elif result == "won":
         state = "won"
     elif result == "coin":
-        global score
         score += 1
 
 
