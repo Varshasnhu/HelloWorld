@@ -21,6 +21,12 @@ def get_connection() -> sqlite3.Connection:
     return connection
 
 
+def random_join_date() -> str:
+    """Return a random date in the last 10 years."""
+    days_back = random.randint(1, 3650)
+    return (date.today() - timedelta(days=days_back)).isoformat()
+
+
 def make_customer_id(customer_name: str, sequence: int) -> str:
     """Return initials followed by a six-digit sequence, e.g. CP000001."""
     parts = customer_name.split()
@@ -65,11 +71,8 @@ def initialize_database() -> None:
         id_column = next(column for column in columns if column["name"] == "customer_id")
 
         if id_column["type"].upper() != "TEXT":
-            # Rebuild the old integer-ID table, preserving customers. Their
-            # joining date is unknown, so leave it NULL rather than invent one.
             old_rows = connection.execute(
-                "SELECT customer_name, customer_email, phone_number "
-                "FROM customers ORDER BY customer_id"
+                "SELECT customer_name, customer_email, phone_number FROM customers ORDER BY customer_id"
             ).fetchall()
             connection.execute(
                 """CREATE TABLE customers_new (
@@ -85,13 +88,29 @@ def initialize_database() -> None:
                     """INSERT INTO customers_new
                        (customer_id, customer_name, customer_email, phone_number, date_of_joining)
                        VALUES (?, ?, ?, ?, NULL)""",
-                    (make_customer_id(row["customer_name"], sequence),
-                     row["customer_name"], row["customer_email"], row["phone_number"]),
+                    (
+                        make_customer_id(row["customer_name"], sequence),
+                        row["customer_name"],
+                        row["customer_email"],
+                        row["phone_number"],
+                    ),
                 )
             connection.execute("DROP TABLE customers")
             connection.execute("ALTER TABLE customers_new RENAME TO customers")
         elif "date_of_joining" not in column_names:
             connection.execute("ALTER TABLE customers ADD COLUMN date_of_joining TEXT")
+
+
+def assign_random_join_dates() -> None:
+    """Fill in NULL or empty DOJ values with random dates across recent years."""
+    with get_connection() as connection:
+        for row in connection.execute(
+            "SELECT customer_id FROM customers WHERE date_of_joining IS NULL OR date_of_joining = ''"
+        ):
+            connection.execute(
+                "UPDATE customers SET date_of_joining = ? WHERE customer_id = ?",
+                (random_join_date(), row["customer_id"]),
+            )
 
 
 def add_customer(
@@ -114,7 +133,7 @@ def add_customer(
 
 
 def seed_random_customers() -> None:
-    """Insert five fictional sample customers, with random joining dates, if empty."""
+    """Insert five fictional sample customers with random DOJ values if the table is empty."""
     first_names = ["Avery", "Jordan", "Morgan", "Riley", "Taylor", "Casey"]
     last_names = ["Carter", "Lee", "Patel", "Rivera", "Kim", "Brooks"]
     with get_connection() as connection:
@@ -124,7 +143,7 @@ def seed_random_customers() -> None:
             name = f"{random.choice(first_names)} {random.choice(last_names)}"
             email = f"customer_{uuid.uuid4().hex[:10]}@example.com"
             phone = f"555-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
-            joined = (date.today() - timedelta(days=random.randint(0, 3650))).isoformat()
+            joined = random_join_date()
             connection.execute(
                 """INSERT INTO customers
                    (customer_id, customer_name, customer_email, phone_number, date_of_joining)
@@ -175,6 +194,7 @@ def delete_customer(customer_id: str) -> bool:
 if __name__ == "__main__":
     initialize_database()
     seed_random_customers()
+    assign_random_join_dates()
     print(f"Customer database ready: {DATABASE_PATH}")
     for customer in list_customers():
         print(dict(customer))
