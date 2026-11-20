@@ -1,11 +1,18 @@
+# === Imports ===
+import numpy as np
+from scipy import optimize
 
+# === XOR training data ===
 X = np.array([[0,0,1], [0,1,1], [1,0,1], [1,1,1]])
 y = np.array([[0], [1], [1], [0]])
 
+# === Network dimensions ===
 L1 = 3
 L2 = 4
 L3 = 1
 
+# === Initialize parameters ===
+np.random.seed(42)
 w1 = np.random.randn(L1 * L2)
 w2 = np.random.randn(L2 * L3)
 b1 = np.zeros(L2)
@@ -13,9 +20,12 @@ b2 = np.zeros(L3)
 
 params = np.concatenate([w1, b1, w2, b2])
 
+# === Sigmoid activation ===
 def a(x):
+    x = np.clip(x, -500, 500)
     return 1/(1+np.exp(-x))
 
+# === Forward pass ===
 def f(params, X):
     w1 = params[:L1*L2].reshape(L1, L2)
     b1 = params[L1*L2:L1*L2+L2]
@@ -24,12 +34,14 @@ def f(params, X):
     
     h = a(X.dot(w1) + b1)
     out = a(h.dot(w2) + b2)
-    return
+    return out
 
+# === Loss function: mean squared error ===
 def loss(params, X, y):
     pred = f(params, X)
     return np.mean((pred - y)**2)
 
+# === Numerical gradient: central finite differences ===
 def grad(params, X, y):
     eps = 1e-7
     g = np.zeros_like(params)
@@ -39,15 +51,22 @@ def grad(params, X, y):
         params_plus[i] += eps
         params_minus[i] -= eps
         g[i] = (loss(params_plus, X, y) - loss(params_minus, X, y)) / (2*eps)
-    return
+    return g
 
+# === Train network ===
 result = optimize.minimize(loss, params, args=(X, y), method='L-BFGS-B', jac=grad, options={'maxiter': 1000, 'disp': True})
+
+if not result.success:
+    print("Training warning:", result.message)
 
 opt_params = result.x
 
+# === Test network ===
 test = np.array([[0,0,1]])
 pred = f(opt_params, test)
-print("Test:", pred)
+predicted_class = int(pred[0, 0] >= 0.5)
+print("Test probability:", pred)
+print("Predicted class:", predicted_class)
 
 print("\nAll:")
 print(f(opt_params, X))
