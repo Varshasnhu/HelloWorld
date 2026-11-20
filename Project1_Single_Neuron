@@ -1,0 +1,66 @@
+# === Imports ===
+import numpy as np
+
+
+# === Single-neuron function ===
+def single_neuron(inputs, weights, bias, activation="sigmoid"):
+    """
+    Calculate the output of a single neuron.
+
+    inputs:     1-D or 2-D array of input values
+    weights:    1-D array of weights; one weight per input feature
+    bias:       Scalar bias value
+    activation: "sigmoid" or "relu"
+    """
+    inputs = np.asarray(inputs, dtype=float)
+    weights = np.asarray(weights, dtype=float)
+
+    if weights.ndim != 1:
+        raise ValueError("weights must be a 1-D array")
+
+    if inputs.ndim == 1:
+        if inputs.shape[0] != weights.shape[0]:
+            raise ValueError("inputs and weights must have the same length")
+        weighted_sum = np.dot(inputs, weights) + bias
+
+    elif inputs.ndim == 2:
+        if inputs.shape[1] != weights.shape[0]:
+            raise ValueError("Each input row must match the weight count")
+        weighted_sum = np.dot(inputs, weights) + bias
+
+    else:
+        raise ValueError("inputs must be a 1-D or 2-D array")
+
+    activation = activation.lower()
+
+    if activation == "sigmoid":
+        weighted_sum = np.clip(weighted_sum, -500, 500)
+        return 1 / (1 + np.exp(-weighted_sum))
+
+    if activation == "relu":
+        return np.maximum(0, weighted_sum)
+
+    raise ValueError("activation must be 'sigmoid' or 'relu'")
+
+
+# === Test the selected activation functions ===
+inputs = np.array([1, 0])
+weights = np.array([0.8, -0.3])
+bias = 0.1
+
+sigmoid_output = single_neuron(
+    inputs,
+    weights,
+    bias,
+    activation="sigmoid"
+)
+
+relu_output = single_neuron(
+    inputs,
+    weights,
+    bias,
+    activation="relu"
+)
+
+print("Sigmoid output:", sigmoid_output)
+print("ReLU output:", relu_output)
