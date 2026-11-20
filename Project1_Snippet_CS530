@@ -1,0 +1,53 @@
+
+X = np.array([[0,0,1], [0,1,1], [1,0,1], [1,1,1]])
+y = np.array([[0], [1], [1], [0]])
+
+L1 = 3
+L2 = 4
+L3 = 1
+
+w1 = np.random.randn(L1 * L2)
+w2 = np.random.randn(L2 * L3)
+b1 = np.zeros(L2)
+b2 = np.zeros(L3)
+
+params = np.concatenate([w1, b1, w2, b2])
+
+def a(x):
+    return 1/(1+np.exp(-x))
+
+def f(params, X):
+    w1 = params[:L1*L2].reshape(L1, L2)
+    b1 = params[L1*L2:L1*L2+L2]
+    w2 = params[L1*L2+L2:L1*L2+L2+L2*L3].reshape(L2, L3)
+    b2 = params[-L3:]
+    
+    h = a(X.dot(w1) + b1)
+    out = a(h.dot(w2) + b2)
+    return
+
+def loss(params, X, y):
+    pred = f(params, X)
+    return np.mean((pred - y)**2)
+
+def grad(params, X, y):
+    eps = 1e-7
+    g = np.zeros_like(params)
+    for i in range(len(params)):
+        params_plus = params.copy()
+        params_minus = params.copy()
+        params_plus[i] += eps
+        params_minus[i] -= eps
+        g[i] = (loss(params_plus, X, y) - loss(params_minus, X, y)) / (2*eps)
+    return
+
+result = optimize.minimize(loss, params, args=(X, y), method='L-BFGS-B', jac=grad, options={'maxiter': 1000, 'disp': True})
+
+opt_params = result.x
+
+test = np.array([[0,0,1]])
+pred = f(opt_params, test)
+print("Test:", pred)
+
+print("\nAll:")
+print(f(opt_params, X))
