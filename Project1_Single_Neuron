@@ -4,13 +4,16 @@ import numpy as np
 
 # === Single-neuron function ===
 def single_neuron(inputs, weights, bias, activation="sigmoid"):
-    """
-    Calculate the output of a single neuron.
+    """Calculate the activated output of one neuron.
 
-    inputs:     1-D or 2-D array of input values
-    weights:    1-D array of weights; one weight per input feature
-    bias:       Scalar bias value
-    activation: "sigmoid" or "relu"
+    Args:
+        inputs: 1-D input vector or 2-D dataset (one sample per row).
+        weights: 1-D list or array with one weight per input feature.
+        bias: Scalar bias value.
+        activation: "sigmoid" or "relu".
+
+    Returns:
+        A scalar for one input vector, or one output per dataset row.
     """
     inputs = np.asarray(inputs, dtype=float)
     weights = np.asarray(weights, dtype=float)
@@ -31,6 +34,8 @@ def single_neuron(inputs, weights, bias, activation="sigmoid"):
     else:
         raise ValueError("inputs must be a 1-D or 2-D array")
 
+    if not isinstance(activation, str):
+        raise ValueError("activation must be 'sigmoid' or 'relu'")
     activation = activation.lower()
 
     if activation == "sigmoid":
@@ -43,24 +48,47 @@ def single_neuron(inputs, weights, bias, activation="sigmoid"):
     raise ValueError("activation must be 'sigmoid' or 'relu'")
 
 
-# === Test the selected activation functions ===
-inputs = np.array([1, 0])
-weights = np.array([0.8, -0.3])
+# === Binary classifier ===
+def binary_classifier(dataset, weights, activation="sigmoid", bias=0.0, threshold=0.5):
+    """Classify each row in a dataset as binary class 0 or 1.
+
+    Args:
+        dataset: 2-D list or array; each row is one sample and each column
+            is one feature.
+        weights: List or 1-D array containing one weight per feature.
+        activation: "sigmoid" or "relu" activation for the neuron.
+        bias: Scalar bias value.
+        threshold: Values greater than or equal to this are class 1;
+            lower values are class 0. Sigmoid is recommended for probability-like
+            scores, and its usual threshold is 0.5.
+
+    Returns:
+        A NumPy array of integer class predictions, one per dataset row.
+    """
+    dataset = np.asarray(dataset, dtype=float)
+    if dataset.ndim != 2:
+        raise ValueError("dataset must be a 2-D array with one sample per row")
+
+    scores = single_neuron(dataset, weights, bias, activation=activation)
+    return (scores >= threshold).astype(int)
+
+
+# === Example: classify a dataset ===
+# The weights and bias here are supplied values, not learned by this program.
+dataset = [
+    [0.0, 0.0],
+    [0.0, 1.0],
+    [1.0, 0.0],
+    [1.0, 1.0],
+]
+weights = [0.8, -0.3]
 bias = 0.1
 
-sigmoid_output = single_neuron(
-    inputs,
+classes = binary_classifier(
+    dataset,
     weights,
-    bias,
-    activation="sigmoid"
+    activation="sigmoid",
+    bias=bias,
+    threshold=0.5,
 )
-
-relu_output = single_neuron(
-    inputs,
-    weights,
-    bias,
-    activation="relu"
-)
-
-print("Sigmoid output:", sigmoid_output)
-print("ReLU output:", relu_output)
+print("Predicted classes:", classes)
