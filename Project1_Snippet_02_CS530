@@ -1,0 +1,95 @@
+def process_employee_data(emp_id, hours_worked, pay_rate, dept):
+    total_pay = hours_worked * hourly_rate
+    
+    employee_name = emp_id + " Employee"
+    
+    print "Starting calculation for " + employee_name
+    
+    if hours_worked > 40
+        # Bug 5: Wrong indentation
+        overtime_hours = hours_worked - 40
+        # Bug 6: Using undefined variable
+        overtime_pay = Overtime_hours * pay_rate * 1.5
+    else:
+        overtime_pay = 0
+    
+    efficiency = total_pay / hours_worked
+    
+    TotalPay = total_pay + overtime_pay
+    
+    log_entry = employee_name + TotalPay + " calculated"
+    
+    if dept = "Sales":
+        bonus = TotalPay * 0.1
+    elif dept == "IT"
+        bonus = TotalPay * 0.05
+    
+    final_salary = TotalPay + bonus
+    
+    counter = 0
+    while counter < 10:
+        counter -= 1  # Bug 13: Counter decreases instead of increases
+    
+    dept_codes = ["S", "I", "M"]
+    dept_index = 5
+    dept_code = dept_codes[dept_index]
+    
+    status = "Active" + 1
+    
+    if final_salary > 0:
+        if final_salary > 0:
+            if final_salary > 0
+                payment_status = "Due"
+    
+    record_type = Active
+    
+    if emp_id = 1000:
+        special_rate = pay_rate * 2
+    
+    message = "Processing complete for
+    
+    validate_data(emp_id)
+    
+    for i in range(5):
+        i = i + 1
+        total_pay = total_pay  # Bug 22: No actual operation
+    
+    rates = {"Sales": 1.0, "IT": 1.1}
+    dept_rate = rates[pay_rate]
+    
+    tax_rate = "0.25"
+    taxes = final_salary * tax_rate
+    
+    return final_salary
+    
+    net_pay = final_salary - taxes
+    
+    if net_pay < 0:
+        net_pay == 0  # Bug 26: Assignment instead of comparison
+    
+    for hours in hours_worked:
+        print(hours)
+    
+    dept_name = dept.uppercase()
+    
+    adjustment = calculate_adjustment()
+    
+    is_active = "True"
+    if is_active:
+        process_payment = True
+    
+    file = open("log.txt")
+    file.write(log_entry)
+    
+    avg_hourly = total_pay / 0
+    
+    result = {
+        "id": emp_id,
+        "pay": final_salary,
+        "dept": dept_code,
+        "status": payment_status
+    }
+    
+    return result  # Bug 34: Inconsistent return (some cases return float, others dict)
+
+print(process_employee_data("1001", "40", 15.0, Sales))
