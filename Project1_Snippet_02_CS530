@@ -248,6 +248,7 @@ if __name__ == "__main__":
     print(single_neuron([1, 2], [0.5, -0.25], 0.1, "sigmoid"))
     print(single_neuron([1, 2], [0.5, -0.25], 0.1, "relu", 0.01))
 
+    # Generate one reproducible synthetic dataset for both activation runs.
     features, labels = generate_synthetic_dataset(
         num_samples=200,
         num_features=2,
@@ -256,15 +257,18 @@ if __name__ == "__main__":
         bias=0.25,
         noise=0.1,
     )
-    print(binary_classifier(features, [0.5, -0.25], 0.1, "sigmoid"))
+    print("Synthetic dataset shape:", features.shape)
+    print("Positive label fraction:", float(np.mean(labels)))
 
-    weights, bias, losses = calculate_weights(
-        dataset=features,
-        labels=labels,
-        activation="sigmoid",
-        learning_rate=0.1,
-        epochs=1000,
-    )
-    print("Calculated weights:", weights)
-    print("Calculated bias:", bias)
-    print("Final loss:", losses[-1])
+    # Train once with sigmoid and once with ReLU on the same dataset.
+    for activation_name in ("sigmoid", "relu"):
+        trained_weights, trained_bias, losses = calculate_weights(
+            dataset=features,
+            labels=labels,
+            activation=activation_name,
+            learning_rate=0.1,
+            epochs=1000,
+        )
+        print(f"{activation_name} weights:", trained_weights)
+        print(f"{activation_name} bias:", trained_bias)
+        print(f"{activation_name} final MSE:", losses[-1])
