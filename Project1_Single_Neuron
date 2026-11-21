@@ -25,12 +25,10 @@ def single_neuron(inputs, weights, bias, activation="sigmoid"):
         if inputs.shape[0] != weights.shape[0]:
             raise ValueError("inputs and weights must have the same length")
         weighted_sum = np.dot(inputs, weights) + bias
-
     elif inputs.ndim == 2:
         if inputs.shape[1] != weights.shape[0]:
             raise ValueError("Each input row must match the weight count")
         weighted_sum = np.dot(inputs, weights) + bias
-
     else:
         raise ValueError("inputs must be a 1-D or 2-D array")
 
@@ -41,7 +39,6 @@ def single_neuron(inputs, weights, bias, activation="sigmoid"):
     if activation == "sigmoid":
         weighted_sum = np.clip(weighted_sum, -500, 500)
         return 1 / (1 + np.exp(-weighted_sum))
-
     if activation == "relu":
         return np.maximum(0, weighted_sum)
 
@@ -62,7 +59,7 @@ def binary_classifier(dataset, weights, activation="sigmoid", bias=0.0, threshol
 # === Train a single-neuron binary classifier ===
 def train_binary_classifier(dataset, labels, activation="sigmoid",
                             learning_rate=0.1, epochs=1000, random_state=None):
-    """Learn neuron weights and bias from a labeled dataset using gradient descent.
+    """Learn neuron weights and bias from labeled data using gradient descent.
 
     Args:
         dataset: 2-D array; each row is a sample and each column a feature.
@@ -73,8 +70,7 @@ def train_binary_classifier(dataset, labels, activation="sigmoid",
         random_state: Optional seed for reproducible initialization.
 
     Returns:
-        A tuple of (weights, bias, loss_history). The loss uses mean squared
-        error, so either supported activation can be trained.
+        (weights, bias, loss_history), where loss uses mean squared error.
     """
     dataset = np.asarray(dataset, dtype=float)
     labels = np.asarray(labels, dtype=float).reshape(-1)
@@ -144,7 +140,8 @@ def make_synthetic_dataset(n_samples=100, n_features=2, label_noise=0.0,
     return features, labels, true_weights, true_bias
 
 
-# === Example: train and evaluate using synthetic data ===
+# === Train and compare both activation functions ===
+# Both models use the same synthetic dataset, but are trained independently.
 synthetic_X, synthetic_y, _, _ = make_synthetic_dataset(
     n_samples=100,
     n_features=2,
@@ -152,21 +149,25 @@ synthetic_X, synthetic_y, _, _ = make_synthetic_dataset(
     random_state=42,
 )
 
-learned_weights, learned_bias, training_losses = train_binary_classifier(
-    synthetic_X,
-    synthetic_y,
-    activation="sigmoid",
-    learning_rate=0.5,
-    epochs=2000,
-    random_state=42,
-)
-synthetic_predictions = binary_classifier(
-    synthetic_X,
-    learned_weights,
-    activation="sigmoid",
-    bias=learned_bias,
-)
-print("Learned weights:", learned_weights)
-print("Learned bias:", learned_bias)
-print("Final training loss:", training_losses[-1])
-print("Synthetic dataset accuracy:", np.mean(synthetic_predictions == synthetic_y))
+for activation_name in ("sigmoid", "relu"):
+    learned_weights, learned_bias, training_losses = train_binary_classifier(
+        synthetic_X,
+        synthetic_y,
+        activation=activation_name,
+        learning_rate=0.5,
+        epochs=2000,
+        random_state=42,
+    )
+    predictions = binary_classifier(
+        synthetic_X,
+        learned_weights,
+        activation=activation_name,
+        bias=learned_bias,
+    )
+    accuracy = np.mean(predictions == synthetic_y)
+
+    print(f"\nActivation: {activation_name}")
+    print("Learned weights:", learned_weights)
+    print("Learned bias:", learned_bias)
+    print("Final training loss:", training_losses[-1])
+    print("Synthetic dataset accuracy:", accuracy)
