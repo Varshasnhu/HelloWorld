@@ -2,6 +2,7 @@
 
 
 # Imports and setup
+from math import exp
 from typing import Any, Dict
 
 
@@ -72,5 +73,48 @@ def process_employee_data(emp_id: str, hours_worked: float, pay_rate: float,
     return result
 
 
+def single_neuron(inputs, weights, bias=0.0, activation="sigmoid",
+                  activation_param=None):
+    """Calculate the output of a single neuron.
+
+    Supported activations:
+        sigmoid: activation_param is the temperature (default 1.0).
+        relu: activation_param is the negative slope (default 0.0).
+    """
+    inputs = list(inputs)
+    weights = list(weights)
+
+    if len(inputs) != len(weights):
+        raise ValueError("inputs and weights must have the same length")
+
+    linear_output = sum(input_value * weight
+                        for input_value, weight in zip(inputs, weights)) + bias
+
+    activation = activation.lower()
+
+    if activation == "sigmoid":
+        temperature = 1.0 if activation_param is None else float(activation_param)
+        if temperature <= 0:
+            raise ValueError("Sigmoid temperature must be greater than zero")
+
+        scaled_output = linear_output / temperature
+        if scaled_output >= 0:
+            return 1.0 / (1.0 + exp(-scaled_output))
+        exponential = exp(scaled_output)
+        return exponential / (1.0 + exponential)
+
+    if activation == "relu":
+        negative_slope = 0.0 if activation_param is None else float(activation_param)
+        if negative_slope < 0:
+            raise ValueError("ReLU negative slope cannot be negative")
+        if linear_output >= 0:
+            return linear_output
+        return negative_slope * linear_output
+
+    raise ValueError("Unsupported activation; use 'sigmoid' or 'relu'")
+
+
 if __name__ == "__main__":
     print(process_employee_data("1001", 40, 15.0, "Sales"))
+    print(single_neuron([1, 2], [0.5, -0.25], 0.1, "sigmoid"))
+    print(single_neuron([1, 2], [0.5, -0.25], 0.1, "relu", 0.01))
