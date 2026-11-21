@@ -1,9 +1,11 @@
-"""Employee payroll and binary classifier module."""
+"""Employee payroll, neuron, and synthetic binary-classifier module."""
 
 
 # Imports and setup
 from math import exp
 from typing import Any, Dict, Iterable, Sequence
+
+import numpy as np
 
 
 def process_employee_data(emp_id: str, hours_worked: float, pay_rate: float,
@@ -118,18 +120,13 @@ def binary_classifier(dataset: Iterable[Sequence[float]], weights: Sequence[floa
                       bias: float = 0.0, activation: str = "sigmoid",
                       activation_param: float = None,
                       threshold: float = 0.5) -> tuple[list[int], list[float]]:
-    """Classify dataset rows with a configurable single-neuron function.
-
-    Returns:
-        predictions: 0 or 1 for each dataset row.
-        scores: Single-neuron activation score for each dataset row.
-    """
+    """Classify dataset rows with a configurable single-neuron function."""
     weights = list(weights)
     predictions = []
     scores = []
 
-    if not 0.0 <= threshold <= 1.0:
-        raise ValueError("threshold must be between 0.0 and 1.0")
+    if activation.lower() == "sigmoid" and not 0.0 <= threshold <= 1.0:
+        raise ValueError("Sigmoid threshold must be between 0.0 and 1.0")
 
     for row_index, row in enumerate(dataset):
         row = list(row)
@@ -152,10 +149,48 @@ def binary_classifier(dataset: Iterable[Sequence[float]], weights: Sequence[floa
     return predictions, scores
 
 
+def generate_synthetic_dataset(num_samples: int = 100, num_features: int = 2,
+                               seed: int = None, weights: Sequence[float] = None,
+                               bias: float = 0.0,
+                               noise: float = 0.0) -> tuple[np.ndarray, np.ndarray]:
+    """Generate features and binary labels for a synthetic dataset."""
+    if num_samples <= 0:
+        raise ValueError("num_samples must be greater than zero")
+    if num_features <= 0:
+        raise ValueError("num_features must be greater than zero")
+    if noise < 0:
+        raise ValueError("noise cannot be negative")
+
+    rng = np.random.default_rng(seed)
+    features = rng.normal(0.0, 1.0, size=(num_samples, num_features))
+
+    if weights is None:
+        weights_array = rng.normal(0.0, 1.0, size=num_features)
+    else:
+        weights_array = np.asarray(weights, dtype=float)
+        if weights_array.shape != (num_features,):
+            raise ValueError("weights must contain exactly num_features values")
+
+    if noise > 0:
+        features += rng.normal(0.0, noise, size=features.shape)
+
+    linear_output = features @ weights_array + bias
+    labels = (linear_output >= 0).astype(int)
+
+    return features, labels
+
+
 if __name__ == "__main__":
     print(process_employee_data("1001", 40, 15.0, "Sales"))
     print(single_neuron([1, 2], [0.5, -0.25], 0.1, "sigmoid"))
     print(single_neuron([1, 2], [0.5, -0.25], 0.1, "relu", 0.01))
 
-    dataset = [[1.0, 2.0], [2.0, 1.0], [-1.0, -2.0]]
-    print(binary_classifier(dataset, [0.5, -0.25], 0.1, "sigmoid"))
+    features, labels = generate_synthetic_dataset(
+        num_samples=200,
+        num_features=2,
+        seed=42,
+        weights=[2.0, -1.0],
+        bias=0.25,
+        noise=0.1,
+    )
+    print(binary_classifier(features, [0.5, -0.25], 0.1, "sigmoid"))
