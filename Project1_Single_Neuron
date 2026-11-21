@@ -2,7 +2,7 @@
 import numpy as np
 
 
-# === Single-neuron function ===
+# === Single-Neuron Forward Pass ===
 def single_neuron(inputs, weights, bias, activation="sigmoid"):
     """Calculate the activated output of one neuron.
 
@@ -45,7 +45,7 @@ def single_neuron(inputs, weights, bias, activation="sigmoid"):
     raise ValueError("activation must be 'sigmoid' or 'relu'")
 
 
-# === Binary classifier ===
+# === Binary Classification ===
 def binary_classifier(dataset, weights, activation="sigmoid", bias=0.0, threshold=0.5):
     """Classify each row in a dataset as binary class 0 or 1."""
     dataset = np.asarray(dataset, dtype=float)
@@ -56,7 +56,7 @@ def binary_classifier(dataset, weights, activation="sigmoid", bias=0.0, threshol
     return (scores >= threshold).astype(int)
 
 
-# === Train a single-neuron binary classifier ===
+# === Weight and Bias Training ===
 def train_binary_classifier(dataset, labels, activation="sigmoid",
                             learning_rate=0.1, epochs=1000, random_state=None):
     """Learn neuron weights and bias from labeled data using gradient descent.
@@ -116,7 +116,7 @@ def train_binary_classifier(dataset, labels, activation="sigmoid",
     return weights, float(bias), loss_history
 
 
-# === Synthetic binary dataset generator ===
+# === Synthetic Dataset Generation ===
 def make_synthetic_dataset(n_samples=100, n_features=2, label_noise=0.0,
                            random_state=None):
     """Generate synthetic binary data from a hidden linear boundary."""
@@ -140,7 +140,7 @@ def make_synthetic_dataset(n_samples=100, n_features=2, label_noise=0.0,
     return features, labels, true_weights, true_bias
 
 
-# === Train and compare both activation functions ===
+# === Training and Activation Comparison ===
 # Both models use the same synthetic dataset, but are trained independently.
 synthetic_X, synthetic_y, _, _ = make_synthetic_dataset(
     n_samples=100,
