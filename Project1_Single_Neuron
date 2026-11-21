@@ -4,17 +4,7 @@ import numpy as np
 
 # === Single-Neuron Forward Pass ===
 def single_neuron(inputs, weights, bias, activation="sigmoid"):
-    """Calculate the activated output of one neuron.
-
-    Args:
-        inputs: 1-D input vector or 2-D dataset (one sample per row).
-        weights: 1-D list or array with one weight per input feature.
-        bias: Scalar bias value.
-        activation: "sigmoid" or "relu".
-
-    Returns:
-        A scalar for one input vector, or one output per dataset row.
-    """
+    """Calculate the activated output of one neuron."""
     inputs = np.asarray(inputs, dtype=float)
     weights = np.asarray(weights, dtype=float)
 
@@ -34,43 +24,40 @@ def single_neuron(inputs, weights, bias, activation="sigmoid"):
 
     if not isinstance(activation, str):
         raise ValueError("activation must be 'sigmoid' or 'relu'")
-    activation = activation.lower()
 
+    activation = activation.lower()
     if activation == "sigmoid":
         weighted_sum = np.clip(weighted_sum, -500, 500)
-        return 1 / (1 + np.exp(-weighted_sum))
+        return 1.0 / (1.0 + np.exp(-weighted_sum))
     if activation == "relu":
-        return np.maximum(0, weighted_sum)
+        return np.maximum(0.0, weighted_sum)
 
     raise ValueError("activation must be 'sigmoid' or 'relu'")
 
 
 # === Binary Classification ===
-def binary_classifier(dataset, weights, activation="sigmoid", bias=0.0, threshold=0.5):
-    """Classify each row in a dataset as binary class 0 or 1."""
+def binary_classifier(dataset, weights, activation="sigmoid", bias=0.0,
+                     threshold=0.5):
+    """Convert neuron scores into binary class predictions."""
     dataset = np.asarray(dataset, dtype=float)
     if dataset.ndim != 2:
-        raise ValueError("dataset must be a 2-D array with one sample per row")
+        raise ValueError("dataset must be a 2-D array")
 
-    scores = single_neuron(dataset, weights, bias, activation=activation)
+    scores = single_neuron(dataset, weights, bias, activation)
+
+    # Sigmoid scores are probabilities, so 0.5 is a natural threshold.
+    # ReLU scores are unbounded; use the supplied threshold or adjust it.
     return (scores >= threshold).astype(int)
 
 
 # === Weight and Bias Training ===
 def train_binary_classifier(dataset, labels, activation="sigmoid",
-                            learning_rate=0.1, epochs=1000, random_state=None):
-    """Learn neuron weights and bias from labeled data using gradient descent.
+                            learning_rate=0.1, epochs=1000,
+                            random_state=None):
+    """Train a single neuron using full-batch gradient descent.
 
-    Args:
-        dataset: 2-D array; each row is a sample and each column a feature.
-        labels: 1-D binary labels (0 or 1), one per dataset row.
-        activation: "sigmoid" or "relu".
-        learning_rate: Positive step size for weight and bias updates.
-        epochs: Number of full-dataset training iterations.
-        random_state: Optional seed for reproducible initialization.
-
-    Returns:
-        (weights, bias, loss_history), where loss uses mean squared error.
+    Sigmoid uses binary cross-entropy.
+    ReLU uses mean squared error.
     """
     dataset = np.asarray(dataset, dtype=float)
     labels = np.asarray(labels, dtype=float).reshape(-1)
@@ -85,6 +72,7 @@ def train_binary_classifier(dataset, labels, activation="sigmoid",
         raise ValueError("labels must contain only 0 and 1")
     if not isinstance(activation, str) or activation.lower() not in ("sigmoid", "relu"):
         raise ValueError("activation must be 'sigmoid' or 'relu'")
+
     activation = activation.lower()
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive")
@@ -95,23 +83,40 @@ def train_binary_classifier(dataset, labels, activation="sigmoid",
     weights = rng.normal(0.0, 0.1, size=dataset.shape[1])
     bias = 0.0
     loss_history = []
-    sample_count = dataset.shape[0]
 
     for _ in range(epochs):
         weighted_sum = dataset @ weights + bias
+
         if activation == "sigmoid":
             clipped_sum = np.clip(weighted_sum, -500, 500)
             predictions = 1.0 / (1.0 + np.exp(-clipped_sum))
-            activation_gradient = predictions * (1.0 - predictions)
+            epsilon = 1e-12
+            safe_predictions = np.clip(predictions, epsilon, 1.0 - epsilon)
+            loss = -np.mean(labels * np.log(safe_predictions)
+                            + (1.0 - labels) * np.log(1.0 - safe_predictions))
+            loss_gradient = (predictions - labels) / dataset.shape[0]
+
         else:
             predictions = np.maximum(0.0, weighted_sum)
+            loss = np.mean((predictions - labels) ** 2)
             activation_gradient = (weighted_sum > 0.0).astype(float)
+            loss_gradient = (
+                2.0 / dataset.shape[0]
+                * (predictions - labels)
+                * activation_gradient
+            )
 
-        errors = predictions - labels
-        loss_history.append(float(np.mean(errors ** 2)))
-        loss_gradient = (2.0 / sample_count) * errors * activation_gradient
-        weights -= learning_rate * (dataset.T @ loss_gradient)
-        bias -= learning_rate * np.sum(loss_gradient)
+        loss_history.append(float(loss))
+
+        if activation == "sigmoid":
+            weight_gradient = dataset.T @ loss_gradient
+            bias_gradient = np.sum(loss_gradient)
+        else:
+            weight_gradient = dataset.T @ loss_gradient
+            bias_gradient = np.sum(loss_gradient)
+
+        weights -= learning_rate * weight_gradient
+        bias -= learning_rate * bias_gradient
 
     return weights, float(bias), loss_history
 
@@ -119,7 +124,7 @@ def train_binary_classifier(dataset, labels, activation="sigmoid",
 # === Synthetic Dataset Generation ===
 def make_synthetic_dataset(n_samples=100, n_features=2, label_noise=0.0,
                            random_state=None):
-    """Generate synthetic binary data from a hidden linear boundary."""
+    """Generate binary data around a reproducible linear boundary."""
     if n_samples <= 0:
         raise ValueError("n_samples must be positive")
     if n_features <= 0:
@@ -141,7 +146,6 @@ def make_synthetic_dataset(n_samples=100, n_features=2, label_noise=0.0,
 
 
 # === Training and Activation Comparison ===
-# Both models use the same synthetic dataset, but are trained independently.
 synthetic_X, synthetic_y, _, _ = make_synthetic_dataset(
     n_samples=100,
     n_features=2,
@@ -150,7 +154,9 @@ synthetic_X, synthetic_y, _, _ = make_synthetic_dataset(
 )
 
 for activation_name in ("sigmoid", "relu"):
-    learned_weights, learned_bias, training_losses = train_binary_classifier(
+    threshold = 0.5 if activation_name == "sigmoid" else 0.5
+
+    learned_weights, learned_bias, loss_history = train_binary_classifier(
         synthetic_X,
         synthetic_y,
         activation=activation_name,
@@ -163,11 +169,12 @@ for activation_name in ("sigmoid", "relu"):
         learned_weights,
         activation=activation_name,
         bias=learned_bias,
+        threshold=threshold,
     )
-    accuracy = np.mean(predictions == synthetic_y)
 
     print(f"\nActivation: {activation_name}")
     print("Learned weights:", learned_weights)
     print("Learned bias:", learned_bias)
-    print("Final training loss:", training_losses[-1])
-    print("Synthetic dataset accuracy:", accuracy)
+    print("Initial loss:", loss_history[0])
+    print("Final loss:", loss_history[-1])
+    print("Synthetic dataset accuracy:", np.mean(predictions == synthetic_y))
