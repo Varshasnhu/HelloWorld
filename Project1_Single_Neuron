@@ -73,7 +73,62 @@ def binary_classifier(dataset, weights, activation="sigmoid", bias=0.0, threshol
     return (scores >= threshold).astype(int)
 
 
-# === Example: classify a dataset ===
+# === Synthetic binary dataset generator ===
+def make_synthetic_dataset(n_samples=100, n_features=2, label_noise=0.0,
+                           random_state=None):
+    """Generate synthetic binary-classification data for the neuron example.
+
+    Samples are drawn from a normal distribution and labeled using a hidden
+    linear decision boundary. Optional label_noise randomly flips labels.
+
+    Returns:
+        features: Array shaped (n_samples, n_features).
+        labels: Binary class labels shaped (n_samples,).
+        true_weights: Weights defining the generated decision boundary.
+        true_bias: Bias defining the generated decision boundary.
+    """
+    if n_samples <= 0:
+        raise ValueError("n_samples must be positive")
+    if n_features <= 0:
+        raise ValueError("n_features must be positive")
+    if not 0.0 <= label_noise <= 1.0:
+        raise ValueError("label_noise must be between 0.0 and 1.0")
+
+    rng = np.random.default_rng(random_state)
+    features = rng.normal(size=(n_samples, n_features))
+    true_weights = rng.normal(size=n_features)
+    true_bias = rng.uniform(-0.5, 0.5)
+
+    labels = (features @ true_weights + true_bias >= 0).astype(int)
+    if label_noise > 0.0:
+        flip_labels = rng.random(n_samples) < label_noise
+        labels[flip_labels] = 1 - labels[flip_labels]
+
+    return features, labels, true_weights, true_bias
+
+
+# === Example: classify a synthetic dataset ===
+# The generated weights and bias are supplied to the classifier as a known
+# reference boundary. This demonstrates predictions; it does not train weights.
+synthetic_X, synthetic_y, synthetic_weights, synthetic_bias = make_synthetic_dataset(
+    n_samples=100,
+    n_features=2,
+    label_noise=0.0,
+    random_state=42,
+)
+synthetic_predictions = binary_classifier(
+    synthetic_X,
+    synthetic_weights,
+    activation="sigmoid",
+    bias=synthetic_bias,
+)
+print("Synthetic dataset sample features:\n", synthetic_X[:5])
+print("Synthetic dataset sample labels:  ", synthetic_y[:5])
+print("Synthetic dataset sample predictions:", synthetic_predictions[:5])
+print("Synthetic dataset accuracy:", np.mean(synthetic_predictions == synthetic_y))
+
+
+# === Example: classify a fixed dataset ===
 # The weights and bias here are supplied values, not learned by this program.
 dataset = [
     [0.0, 0.0],
