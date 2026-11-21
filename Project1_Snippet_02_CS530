@@ -1,9 +1,9 @@
-"""Employee payroll processing module."""
+"""Employee payroll and binary classifier module."""
 
 
 # Imports and setup
 from math import exp
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, Sequence
 
 
 def process_employee_data(emp_id: str, hours_worked: float, pay_rate: float,
@@ -114,7 +114,48 @@ def single_neuron(inputs, weights, bias=0.0, activation="sigmoid",
     raise ValueError("Unsupported activation; use 'sigmoid' or 'relu'")
 
 
+def binary_classifier(dataset: Iterable[Sequence[float]], weights: Sequence[float],
+                      bias: float = 0.0, activation: str = "sigmoid",
+                      activation_param: float = None,
+                      threshold: float = 0.5) -> tuple[list[int], list[float]]:
+    """Classify dataset rows with a configurable single-neuron function.
+
+    Returns:
+        predictions: 0 or 1 for each dataset row.
+        scores: Single-neuron activation score for each dataset row.
+    """
+    weights = list(weights)
+    predictions = []
+    scores = []
+
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError("threshold must be between 0.0 and 1.0")
+
+    for row_index, row in enumerate(dataset):
+        row = list(row)
+        if len(row) != len(weights):
+            raise ValueError(
+                f"Dataset row {row_index} has {len(row)} features, "
+                f"but {len(weights)} weights were provided"
+            )
+
+        score = single_neuron(
+            inputs=row,
+            weights=weights,
+            bias=bias,
+            activation=activation,
+            activation_param=activation_param,
+        )
+        scores.append(float(score))
+        predictions.append(1 if score >= threshold else 0)
+
+    return predictions, scores
+
+
 if __name__ == "__main__":
     print(process_employee_data("1001", 40, 15.0, "Sales"))
     print(single_neuron([1, 2], [0.5, -0.25], 0.1, "sigmoid"))
     print(single_neuron([1, 2], [0.5, -0.25], 0.1, "relu", 0.01))
+
+    dataset = [[1.0, 2.0], [2.0, 1.0], [-1.0, -2.0]]
+    print(binary_classifier(dataset, [0.5, -0.25], 0.1, "sigmoid"))
